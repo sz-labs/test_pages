@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="SZ Labs 的第一个小小网页。你好，世界，很高兴在这里遇见你。" />
+    <meta name="theme-color" content="#f5f6f8" />
+    <title>你好，世界 · SZ Labs</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --background: #f5f6f8;
+        --ink: #172d36;
+        --muted: #63737b;
+        --line: #dce2e5;
+        --accent: #c2ee93;
+      }
+
+      * { box-sizing: border-box; }
+      html { scroll-behavior: smooth; }
+      body {
+        margin: 0;
+        color: var(--ink);
+        background: var(--background);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      button, a { -webkit-tap-highlight-color: transparent; }
+      a { color: inherit; }
+      button { font: inherit; }
+      :focus-visible { outline: 3px solid #507b2b; outline-offset: 5px; }
+      .wrap { width: min(1120px, calc(100% - 64px)); margin-inline: auto; }
+      .header {
+        min-height: 104px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 24px;
+      }
+      .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+      .brand-mark {
+        width: 38px;
+        height: 38px;
+        display: grid;
+        place-items: center;
+        border-radius: 11px;
+        color: white;
+        background: var(--ink);
+        font-size: 19px;
+        font-weight: 750;
+      }
+      .brand-name { font-size: 15px; font-weight: 750; letter-spacing: .1em; }
+      .environment {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        border: 1px solid var(--line);
+        border-radius: 100px;
+        font-size: 12px;
+        color: var(--muted);
+        white-space: nowrap;
+      }
+      .environment::before { content: ""; width: 6px; height: 6px; background: #6c9e43; border-radius: 50%; }
+      .hero {
+        display: grid;
+        grid-template-columns: 1.15fr 1fr;
+        align-items: center;
+        gap: 64px;
+        padding: 60px 0 80px;
+      }
+      .eyebrow { margin: 0 0 24px; color: var(--muted); font-size: 13px; letter-spacing: .12em; }
+      h1 { margin: 0; font-size: clamp(42px, 5.6vw, 72px); line-height: 1.22; letter-spacing: -.06em; font-weight: 750; }
+      .intro { margin: 24px 0 0; font-size: 21px; line-height: 1.6; letter-spacing: -.02em; }
+      .description { max-width: 395px; margin: 16px 0 0; color: var(--muted); font-size: 15px; line-height: 1.95; }
+      .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 24px; margin-top: 32px; }
+      .hello-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 20px;
+        min-height: 50px;
+        padding: 12px 21px;
+        border: 1px solid var(--ink);
+        border-radius: 10px;
+        background: var(--ink);
+        color: white;
+        cursor: pointer;
+        transition: background .2s, transform .2s;
+      }
+      .hello-button:hover { background: #2b4653; transform: translateY(-2px); }
+      .more-link { padding: 12px 0; font-size: 14px; text-decoration: none; }
+      .more-link span { margin-left: 7px; }
+      .greeting { min-height: 28px; margin: 18px 0 0; color: #466b2b; font-size: 14px; line-height: 1.8; }
+      .poster {
+        position: relative;
+        min-height: 400px;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 32px;
+        border-radius: 24px;
+        color: #f6f9fa;
+        background-color: var(--ink);
+        background-image: radial-gradient(#ffffff14 1px, transparent 1px);
+        background-size: 22px 22px;
+      }
+      .poster-top { display: flex; justify-content: space-between; align-items: center; font-size: 11px; letter-spacing: .14em; }
+      .poster-top span:last-child { color: #a8b8bf; letter-spacing: .04em; }
+      .poster-word { position: relative; z-index: 1; margin: 42px 0 34px; font-size: clamp(52px, 6vw, 76px); font-weight: 800; line-height: 1.06; letter-spacing: -.065em; }
+      .poster-word span { color: var(--accent); }
+      .poster-bottom { display: flex; align-items: center; justify-content: space-between; gap: 20px; color: #c1cdd1; font-size: 12px; }
+      .asterisk { position: absolute; right: 20px; bottom: 50px; color: var(--accent); font-size: 130px; line-height: 1; opacity: .2; transform: rotate(15deg); }
+      .details { padding: 36px 0 52px; border-top: 1px solid var(--line); }
+      .section-label { margin: 0 0 28px; color: var(--muted); font-size: 12px; font-weight: 500; letter-spacing: .1em; }
+      .features { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+      .number { display: inline-block; margin-bottom: 16px; color: #87959b; font-size: 12px; font-variant-numeric: tabular-nums; }
+      h3 { margin: 0 0 10px; font-size: 17px; font-weight: 650; }
+      .feature p { margin: 0; color: var(--muted); font-size: 14px; line-height: 1.85; }
+      .footer { display: flex; justify-content: space-between; gap: 20px; padding: 24px 0 32px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; line-height: 1.8; }
+
+      @media (max-width: 800px) {
+        .hero { gap: 32px; }
+        .poster { min-height: 355px; padding: 24px; }
+        .poster-word { font-size: 54px; }
+        .features { gap: 24px; }
+      }
+      @media (max-width: 640px) {
+        .wrap { width: calc(100% - 40px); }
+        .header { min-height: 84px; }
+        .brand-name { font-size: 13px; }
+        .hero { grid-template-columns: 1fr; gap: 24px; padding: 36px 0 44px; }
+        .eyebrow { margin-bottom: 18px; }
+        .intro { font-size: 19px; }
+        .description { max-width: none; }
+        .poster { min-height: 340px; }
+        .poster-word { margin: 32px 0; font-size: 68px; }
+        .features { grid-template-columns: 1fr; gap: 28px; }
+        .number { margin-bottom: 10px; }
+        .details { padding: 28px 0 36px; }
+        .footer { flex-direction: column; gap: 4px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html { scroll-behavior: auto; }
+        .hello-button { transition: none; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header class="header">
+        <a class="brand" href="./" aria-label="SZ Labs 首页">
+          <span class="brand-mark" aria-hidden="true">s.</span>
+          <span class="brand-name">SZ LABS</span>
+        </a>
+        <span class="environment">开发预览</span>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="welcome-title">
+          <div>
+            <p class="eyebrow">每个开始，都值得期待</p>
+            <h1 id="welcome-title">你好，世界。</h1>
+            <p class="intro">很高兴在这里遇见你。</p>
+            <p class="description">这是我们的第一个网页。欢迎你来看看，点一点，也为接下来的故事留个位置。</p>
+            <div class="actions">
+              <button class="hello-button" id="hello-button" type="button">打个招呼 <span aria-hidden="true">↗</span></button>
+              <a class="more-link" href="#about">关于这个页面 <span aria-hidden="true">↓</span></a>
+            </div>
+            <p class="greeting" id="greeting" role="status" aria-live="polite"></p>
+          </div>
+
+          <div class="poster" aria-hidden="true">
+            <div class="poster-top"><span>A LITTLE BEGINNING</span><span>NO. 001</span></div>
+            <div class="poster-word">HELLO,<br /><span>WORLD.</span></div>
+            <span class="asterisk">✳</span>
+            <div class="poster-bottom"><span>一切美好，正在发生。</span><span>↗</span></div>
+          </div>
+        </section>
+
+        <section class="details" id="about" aria-labelledby="about-title">
+          <h2 class="section-label" id="about-title">关于这个小小的页面</h2>
+          <div class="features">
+            <article class="feature">
+              <span class="number">01 / 开始</span>
+              <h3>从一个想法出发</h3>
+              <p>先把第一步走出来，让脑海中的想法变成看得见的东西。</p>
+            </article>
+            <article class="feature">
+              <span class="number">02 / 相遇</span>
+              <h3>在每个屏幕相遇</h3>
+              <p>无论你用手机还是电脑，都能轻松看看这里的新变化。</p>
+            </article>
+            <article class="feature">
+              <span class="number">03 / 期待</span>
+              <h3>给未来留点空间</h3>
+              <p>故事才刚开始。更多有意思的内容，留给下一次见面。</p>
+            </article>
+          </div>
+        </section>
+      </main>
+
+      <footer class="footer"><span>© 2026 SZ Labs</span><span>谢谢你的到来，愿你今天也有好心情。</span></footer>
+    </div>
+    <script>
+      const helloButton = document.querySelector("#hello-button");
+      const greeting = document.querySelector("#greeting");
+      const messages = ["你好呀，欢迎来访！👋", "收到你的招呼了，祝你今天顺顺利利。", "很开心再次见到你，记得常来看看！"];
+      let greetingIndex = 0;
+      helloButton.addEventListener("click", () => {
+        greeting.textContent = messages[greetingIndex % messages.length];
+        greetingIndex += 1;
+      });
+    </script>
+  </body>
+</html>
