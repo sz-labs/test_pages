@@ -86,7 +86,7 @@ export class MySQLRepository {
   }
   async session(c, id, lock = false) {
     const [[session]] = await c.execute("SELECT *, expires_at > UTC_TIMESTAMP(3) AS active FROM pages_inventory_import_sessions WHERE id = ?" + (lock ? " FOR UPDATE" : ""), [id]);
-    check(session && session.active, 410, "上传会话已过期或已取消，请重新选择文件上传");
+    check(session && Number(session.active) === 1, 410, "上传会话已过期或已取消，请重新选择文件上传");
     return session;
   }
   async status(c, session) {

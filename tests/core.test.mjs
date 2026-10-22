@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { parseExcel } from "../shared/excel.js";
 import { MAX_BYTES } from "../shared/limits.js";
-import { sqlDecimal } from "../service/repository.js";
+import { sqlDecimal, MySQLRepository } from "../service/repository.js";
 import { databaseConfig } from "../service/config.js";
 import { authService } from "../service/auth.js";
 import { workbook, exampleRow, padZip, password } from "./helpers.mjs";
@@ -46,4 +46,11 @@ test("eight hour signed tokens reject tampering, expiry and other passwords", ()
   assert.throws(() => auth.require(request("1." + issued.accessToken.split(".").slice(1).join("."))), { status: 401 });
   assert.throws(() => authService(password + "changed").require(request(issued.accessToken)), { status: 401 });
   assert.throws(() => authService("").issue(), { status: 503 });
+});
+
+test("expired session SQL flags are checked numerically when MySQL returns BIGINT strings", async () => {
+  const repository = new MySQLRepository();
+  const connection = active => ({ execute: async () => [[{ id: "test", active }]] });
+  for (const active of [0, "0", null]) await assert.rejects(repository.session(connection(active), "test"), { status: 410 });
+  for (const active of [1, "1"]) assert.equal((await repository.session(connection(active), "test")).id, "test");
 });
