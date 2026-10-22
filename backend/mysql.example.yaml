@@ -1,0 +1,22 @@
+# MySQL 连接配置模板。
+# 从仓库根目录将本文件复制为 mysql.local.yaml，再填写真实连接信息。
+# mysql.local.yaml 已加入 .gitignore，后端读取此配置，网页不读取。
+
+mysql:
+  # 只填写域名或 IP，不要带 mysql://、http:// 或端口。
+  host: "你的数据库主机或IP"
+  port: 3306
+  database: "你的数据库名称"
+  username: "你的数据库用户名"
+  # 请保留双引号；密码中的反斜杠和双引号需要转义。
+  password: "你的数据库密码"
+
+  charset: "utf8mb4"
+  connect_timeout_ms: 10000
+  pool_size: 5
+
+  # 根据数据库服务商要求启用 TLS。
+  ssl:
+    enabled: false
+    # 使用服务商提供的 CA 证书时填写文件路径，否则留空。
+    ca_file: ""

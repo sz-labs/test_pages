@@ -1,2 +1,16 @@
 .env
 .env.*
+/mysql.txt
+/mysql.local.yaml
+/mysql.local.yml
+!.env.example
+node_modules/
+.venv/
+__pycache__/
+.pytest_cache/
+/backend/admin.local.txt
+/pytest-cache-files-*/
+dist/
+*.local.yaml
+*.local.yml
+*.local.txt
