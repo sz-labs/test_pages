@@ -1,6 +1,6 @@
 # 库存更新记录工作台 · test
 
-本分支基于 develop 的 `3ab8565`，改为 **Vue 3 + Vercel JavaScript 云函数 + 现有 MySQL**。浏览器解析 Excel 做预览，云函数独立重新解析原文件并写库，其他访客匿名读取完整发布的记录。无需 Python。本分支的 GitHub Actions 只测试、构建，不发布 GitHub Pages。
+本分支基于 develop 的 `3ab8565`，改为 **Vue 3 + Vercel JavaScript 云函数 + 现有 MySQL**。浏览器解析 Excel 做预览，云函数独立重新解析原文件并写库，其他访客匿名读取完整发布的记录。无需 Python。推送到 `test` 后，GitHub Actions 先测试和构建，通过后自动发布 Vue 前端到 GitHub Pages。
 
 ## 项目结构
 
@@ -14,7 +14,7 @@ config/mysql.example.yaml   私有 MySQL 配置模板
 database/001_import_support.sql  辅助表初始化（手动执行）
 tests/                      单元及独立 MySQL 集成测试
 vercel.json                 构建 frontend/dist，/api 转发到云函数
-.github/workflows/test.yml   只测试和构建
+.github/workflows/test.yml   测试、构建及 test 分支 Pages 发布
 ```
 
 ## 本地启动
@@ -61,9 +61,19 @@ SQL 只新增 `pages_inventory_import_sessions`、`pages_inventory_import_chunks
 
 `tests/integration/schema.sql` **只用于隔离测试库**，请勿在业务库执行。此次代码交付不会执行任何真实数据库迁移。
 
+## GitHub Pages 自动发布
+
+访问地址为 https://sz-labs.github.io/test_pages/。推送到 `test` 后，工作流在独立 MySQL 中运行测试，以 `/test_pages/` 为资源基础路径构建，然后只上传 `frontend/dist` 并发布。拉取请求只运行验证，不部署。
+
+仓库 Settings → Pages 的 Source 需要为 GitHub Actions；Settings → Environments → github-pages 的部署分支规则需要允许 `test`。同一仓库的其他分支如果也发布 Pages，会覆盖这个站点。
+
+Pages 只托管前端。未部署云函数时，可以打开页面、选择 Excel 并预览，数据库共享功能尚不可用。云函数部署完成后，在 Settings → Secrets and variables → Actions → Variables 配置公开变量 `VITE_API_BASE_URL`，值为 API 的 HTTPS 站点根地址（例如 `https://your-project.vercel.app`，不带 `/api`），然后重新运行工作流或推送提交。服务端 `ALLOWED_ORIGINS` 需包含 `https://sz-labs.github.io`。不要把 MySQL 凭据或管理口令放入该变量。
+
+本机构建命令为 `npm run build --workspace frontend -- --base=/test_pages/`，生成文件位于 `frontend/dist`。本地构建不会自动发布；推送代码后的工作流负责发布。Vercel 继续使用默认 `/` 基础路径独立构建。
+
 ## 后续手动部署到 Vercel
 
-本次只提交代码，不创建或部署 Vercel 项目。后续可在 Vercel 中导入 `sz-labs/test_pages`，选择本分支 `test`，Root Directory 保持仓库根目录，Framework Preset 选择 Other。根目录 `vercel.json` 已配置：
+Vercel 云函数需另行部署。可在 Vercel 中导入 `sz-labs/test_pages`，选择本分支 `test`，Root Directory 保持仓库根目录，Framework Preset 选择 Other。根目录 `vercel.json` 已配置：
 
 - Node.js 24.x（根 `package.json` 的 engines）。
 - 安装：`npm ci`；构建：`npm run build`；输出：`frontend/dist`。
