@@ -41,7 +41,7 @@ async function ok(path, options) { const response = await call(path, options); c
 async function begin(bytes, overrides = {}) { return ok("/imports", { method: "POST", admin: true, body: { fileName: "test.xlsx", size: bytes.length, sha256: hash(bytes), ...overrides } }); }
 async function send(id, bytes) { for (let index = 0; index * CHUNK_BYTES < bytes.length; index++) await ok(`/imports/${id}/chunks/${index}`, { method: "PUT", admin: true, body: bytes.subarray(index * CHUNK_BYTES, (index + 1) * CHUNK_BYTES) }); }
 async function finish(id) { return ok(`/imports/${id}/complete`, { method: "POST", admin: true }); }
-async function scalar(sql, args = []) { return (await connection.execute(sql, args))[0][0].n; }
+async function scalar(sql, args = []) { return Number((await connection.execute(sql, args))[0][0].n); }
 const integration = (name, fn) => test(name, { skip: !enabled }, fn);
 
 integration("administrator writes and anonymous pagination preserves fourteen raw cells", async () => {
