@@ -1,6 +1,7 @@
 <script>
 import { markRaw } from "vue";
-import * as InventoryCore from "./inventory-core.js";
+import * as InventoryCore from "../../shared/inventory-core.js";
+import { createApi, loadWorkbook, publishExcel } from "./transport.js";
 const numberFormatter = new Intl.NumberFormat("zh-CN", { maximumFractionDigits: 6 });
 
 export default {
@@ -19,7 +20,7 @@ export default {
   },
   computed: {
     configured() {
-      if (import.meta.env.DEV && !this.apiRoot) return true;
+      if (!this.apiRoot) return ["http:", "https:"].includes(window.location.protocol);
       try {
         const url = new URL(this.apiRoot);
         return url.protocol === "https:" || (url.protocol === "http:" && ["localhost", "127.0.0.1", "[::1]"].includes(url.hostname));
@@ -77,21 +78,9 @@ export default {
       return { "sku-column": index === 0, "name-column": index === 1, "time-column": index === 3, "type-column": index === 12, numeric: InventoryCore.NUMERIC_COLUMNS.has(index) };
     },
     async api(path, options = {}) {
-      if (!this.configured) throw new Error("共享服务尚未配置，请先设置公网 HTTPS 接口地址");
-      const headers = new Headers(options.headers || {});
-      if (this.accessToken) headers.set("Authorization", `Bearer ${this.accessToken}`);
-      let response;
-      try {
-        response = await fetch(this.apiRoot + path, { ...options, headers, credentials: "omit", cache: "no-store", signal: AbortSignal.timeout(options.method === "POST" ? 120000 : 30000) });
-      } catch {
-        throw new Error("无法连接共享服务，请检查网络或接口地址后重试");
-      }
-      const body = await response.json().catch(() => ({}));
-      if (!response.ok) {
-        if (response.status === 401) this.accessToken = "";
-        throw new Error(typeof body.detail === "string" ? body.detail : "接口请求失败，请稍后重试");
-      }
-      return body;
+      if (!this.configured) throw new Error("请使用 HTTPS 接口地址，本机开发可使用 HTTP");
+      try { return await createApi({ root: this.apiRoot, token: () => this.accessToken })(path, options); }
+      catch (error) { if (error.status === 401) this.accessToken = ""; throw error; }
     },
     async refreshShared() {
       if (!this.configured || this.refreshing || this.publishing) return;
@@ -113,7 +102,7 @@ export default {
     async loadShared(id) {
       if (!id) return;
       try {
-        const data = await this.api(`/api/uploads/${encodeURIComponent(id)}`);
+        const data = await loadWorkbook((path, options) => this.api(path, options), id);
         const workbook = markRaw(InventoryCore.hydrateWorkbook(data));
         this.cancelParsing();
         this.workbook = workbook;
@@ -205,9 +194,13 @@ export default {
       this.publishing = true; this.setStatus("正在上传并保存到 MySQL，请稍候…");
       let saved = null;
       try {
-        const data = new FormData();
-        data.append("file", this.selectedFile, this.selectedFile.name);
-        const result = await this.api("/api/uploads", { method: "POST", body: data });
+        const result = await publishExcel({
+          api: (path, options) => this.api(path, options), file: this.selectedFile,
+          scope: this.apiRoot || window.location.origin,
+          onProgress: ({ phase, done, total }) => this.setStatus(phase === "publishing"
+            ? "正在校验完整 Excel 并保存到 MySQL，请稍候…"
+            : `正在上传 ${done}/${total} 个分块（${Math.round(done / total * 100)}%），支持失败后重试续传…`),
+        });
         saved = result;
         this.preview = false; this.selectedFile = null;
         this.fileMeta = { fileName: result.fileName, uploadedAt: result.uploadedAt };
@@ -217,7 +210,7 @@ export default {
         await this.loadShared(result.id);
         this.connectionState = "connected";
         this.setStatus(result.duplicate ? "这份文件已存在，已切换到对应的共享记录。" : "已保存到 MySQL 并发布。其他访客打开网页即可查看。", "success");
-      } catch (error) { this.setStatus(saved ? "数据已保存，但刷新共享记录失败。请点击刷新共享数据重试。" : error.message, "error"); }
+      } catch (error) { this.setStatus(saved ? "数据已保存，但刷新共享记录失败。请点击刷新共享数据重试。" : `${error.message}。重新选择同一文件后可重试；若发布已完成，会自动返回原记录。`, "error"); }
       finally { this.publishing = false; }
     },
     preventFileNavigation(event) {
@@ -242,7 +235,7 @@ export default {
 <div class="wrap">
   <header class="header">
     <a class="brand" href="./" aria-label="SZ Labs 首页"><span class="brand-mark" aria-hidden="true">s.</span><span class="brand-name">SZ LABS</span></a>
-    <div class="header-actions"><span class="environment" :class="{connected: connectionState === 'connected'}" id="service-state">{{ serviceLabel }}</span><button class="button button-quiet" id="admin-button" @click="openLogin">{{ accessToken ? '退出登录' : '管理员登录' }}</button></div>
+    <div class="header-actions"><span class="environment" :class="{connected: connectionState === 'connected'}" id="service-state">{{ serviceLabel }}</span><button class="button button-quiet" id="admin-button" :disabled="publishing" @click="openLogin">{{ accessToken ? '退出登录' : '管理员登录' }}</button></div>
   </header>
   <main>
     <section class="page-heading" aria-labelledby="welcome-title"><div><p class="eyebrow">INVENTORY / 库存工作台</p><h1 id="welcome-title">库存更新记录<span class="title-dot">.</span></h1><p class="page-description">每一笔变动，都清楚可查。</p></div><button class="button button-quiet" id="refresh-button" :disabled="!configured || refreshing || publishing" @click="refreshShared"><span aria-hidden="true">↻</span> {{ refreshing ? '正在刷新…' : '刷新共享数据' }}</button></section>
@@ -271,7 +264,7 @@ export default {
       <p class="table-hint">统计随筛选更新。库存原值与新值是每笔记录的快照，不作跨记录累加。</p>
     </section>
   </main>
-  <footer class="footer"><span>© 2026 SZ Labs</span><span>库存工作台 · 开发预览</span></footer>
+  <footer class="footer"><span>© 2026 SZ Labs</span><span>库存工作台 · Test</span></footer>
 </div>
 <dialog ref="adminDialog" aria-labelledby="admin-title" @close="adminPassword = ''"><form @submit.prevent="login"><div class="dialog-heading"><h2 id="admin-title">管理员登录</h2><button class="close-button" type="button" aria-label="关闭登录窗口" @click="closeLogin">×</button></div><p>访客可以查看已发布记录。管理员登录后可上传并发布新文件。</p><label class="password-label">管理口令<input id="admin-password" v-model="adminPassword" type="password" autocomplete="current-password" required /></label><p class="login-error" role="alert">{{ loginError }}</p><button class="button button-primary" id="login-submit" :disabled="loggingIn" type="submit">{{ loggingIn ? '正在登录…' : '登录' }}</button></form></dialog>
 </template>

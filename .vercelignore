@@ -1,0 +1,13 @@
+.git
+.env
+.env.*
+**/*.local.*
+mysql.txt
+.venv
+backend
+**/node_modules
+**/__pycache__
+pytest-cache-files-*
+*.xlsx
+*.xls
+tests

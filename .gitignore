@@ -14,3 +14,9 @@ dist/
 *.local.yaml
 *.local.yml
 *.local.txt
+.vercel/
+coverage/
+
+# Business workbooks are supplied at runtime, never committed.
+*.xlsx
+*.xls

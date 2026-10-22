@@ -1,0 +1,53 @@
+name: Test frontend and MySQL API
+
+on:
+  push:
+    branches: [test]
+  pull_request:
+    branches: [test]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: isolated-ci-password
+          MYSQL_DATABASE: inventory_ci
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -pisolated-ci-password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=12
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+      - name: Integration tests against disposable MySQL only
+        run: npm run test:integration
+        env:
+          INVENTORY_TEST_MYSQL: '1'
+          MYSQL_CONFIG_YAML: |
+            mysql:
+              host: "127.0.0.1"
+              port: 3306
+              database: "inventory_ci"
+              username: "root"
+              password: "isolated-ci-password"
+              ssl:
+                enabled: false
+      - run: npm run build

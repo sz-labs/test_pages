@@ -1,6 +1,6 @@
 # MySQL 连接配置模板。
 # 从仓库根目录将本文件复制为 mysql.local.yaml，再填写真实连接信息。
-# mysql.local.yaml 已加入 .gitignore，后端读取此配置，网页不读取。
+# mysql.local.yaml 已加入 .gitignore，JavaScript 云函数读取此配置，网页不读取。
 
 mysql:
   # 只填写域名或 IP，不要带 mysql://、http:// 或端口。
@@ -13,10 +13,14 @@ mysql:
 
   charset: "utf8mb4"
   connect_timeout_ms: 10000
-  pool_size: 5
 
   # 根据数据库服务商要求启用 TLS。
   ssl:
     enabled: false
     # 使用服务商提供的 CA 证书时填写文件路径，否则留空。
     ca_file: ""
+    # Vercel 环境变量中可用 YAML 多行字符串直接填写 CA PEM。
+    # ca_pem: |
+    #   -----BEGIN CERTIFICATE-----
+    #   ...
+    #   -----END CERTIFICATE-----

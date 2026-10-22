@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import * as XLSX from "../src/vendor/xlsx.mjs";
-import * as core from "../src/inventory-core.js";
+import * as XLSX from "../../shared/vendor/xlsx.mjs";
+import * as core from "../../shared/inventory-core.js";
 
 const row = (sku, change, warehouse = "测试仓", type = "出库 / 手动出库") => [
   sku, "测试商品", "test-account", "21 Oct 2026 17:24", "A-01", "100", change,
