@@ -3,9 +3,6 @@ name: Deploy frontend to GitHub Pages
 on:
   push:
     branches: [develop]
-    paths:
-      - frontend/**
-      - .github/workflows/deploy.yml
   workflow_dispatch:
     inputs:
       api_base_url:
