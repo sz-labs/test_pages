@@ -70,9 +70,11 @@ backend/
 
 目前只有 MySQL 时，Pages 上可以导入并预览本机 Excel；共享数据库功能还需要独立 Python 服务。Pages 和 Actions 都不会持续运行此后端。
 
-后端部署完成后，在 [Actions 仓库变量](https://github.com/sz-labs/test_pages/settings/variables/actions) 中添加 `VITE_API_BASE_URL`，填入公网 HTTPS API 根地址，例如 `https://api.example.com`（不带 `/api`），然后手动运行部署工作流。这个变量会写入公开的网页文件，只能填写公开接口地址。未配置时页面会提示共享服务未连接。
+后端部署完成后，在 [Actions 仓库变量](https://github.com/sz-labs/test_pages/settings/variables/actions) 中添加 `VITE_API_BASE_URL`，填入公网 HTTPS API 根地址，例如 `https://api.example.com`（不带 `/api`），然后手动运行部署工作流。也可在 Run workflow 中选择 develop，并在 api_base_url 输入此次构建使用的 HTTPS 根地址。这个变量会写入公开的网页文件，只能填写公开接口地址。未配置时页面会提示共享服务未连接。
 
 ## 独立部署后端
+
+完整的打包、上传、服务器启动及 Pages 接口配置步骤见 [后端部署指南](backend/DEPLOY.md)。在仓库根目录执行 `python scripts/package_backend.py` 可生成 `dist/inventory-backend.tar.gz`；私有数据库配置和口令不包含在包中。
 
 将 Python 后端部署到服务器，设置私有数据库 YAML 和至少 16 字符的 `ADMIN_PASSWORD`，启动 `python -m uvicorn backend.app:app --host 0.0.0.0 --port 8000`，通过反向代理提供 HTTPS。`ALLOWED_ORIGINS` 默认允许 `https://sz-labs.github.io`；自定义域名时设置为实际前端的 origin，多个以逗号分隔。
 
