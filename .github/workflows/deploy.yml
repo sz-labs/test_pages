@@ -48,6 +48,7 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     permissions:
+      actions: read
       pages: write
       id-token: write
     environment:
@@ -55,13 +56,32 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - name: Check Pages source
+        id: pages
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           source=$(gh api "repos/$GITHUB_REPOSITORY/pages" --jq '.build_type')
+          echo "mode=$source" >> "$GITHUB_OUTPUT"
           if [ "$source" != "workflow" ]; then
             echo "::warning::Choose Settings > Pages > Build and deployment > Source > GitHub Actions to prevent branch publishing from overwriting the Vue site."
           fi
+      - name: Wait for branch publishing to finish
+        if: github.event_name == 'push' && steps.pages.outputs.mode != 'workflow'
+        timeout-minutes: 8
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # A legacy branch build can overwrite the custom artifact. Publish Vue last.
+          for attempt in $(seq 1 84); do
+            active=$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$GITHUB_SHA&per_page=100" --jq '[.workflow_runs[] | select(.path == "dynamic/pages/pages-build-deployment" and .status != "completed")] | length')
+            if [ "$active" = "0" ]; then
+              exit 0
+            fi
+            echo "Waiting for the branch Pages build to finish..."
+            sleep 5
+          done
+          echo "::error::Branch Pages publishing did not finish; switch Pages Source to GitHub Actions and rerun this workflow."
+          exit 1
       - name: Deploy frontend
         id: deployment
         uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4
